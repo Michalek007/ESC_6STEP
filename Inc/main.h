@@ -75,6 +75,9 @@ void Error_Handler(void);
 #define Start_Stop_Pin LL_GPIO_PIN_0
 #define Start_Stop_GPIO_Port GPIOF
 #define Start_Stop_EXTI_IRQn EXTI0_1_IRQn
+#define PWM_DSHOT_Pin LL_GPIO_PIN_1
+#define PWM_DSHOT_GPIO_Port GPIOF
+#define PWM_DSHOT_EXTI_IRQn EXTI0_1_IRQn
 #define M1_BEMF_U_Pin LL_GPIO_PIN_0
 #define M1_BEMF_U_GPIO_Port GPIOA
 #define M1_BEMF_V_Pin LL_GPIO_PIN_1
