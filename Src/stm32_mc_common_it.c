@@ -33,6 +33,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "communication.h"
+#include "interface.h"
 /* USER CODE END Includes */
 
 /** @addtogroup MCSDK
@@ -71,6 +72,9 @@ void USART1_IRQHandler(void) {
 	uint32_t activeIdleFlag;
 	uint32_t isEnabledIdleFlag;
 
+	Interface_UartRxHandler();
+	return;
+
 	if (0U == LL_USART_IsActiveFlag_TC(USARTA)) {
 		/* Nothing to do */
 	} else {
@@ -79,7 +83,7 @@ void USART1_IRQHandler(void) {
 		LL_USART_ClearFlag_TC(USARTA);
 		/* Data Sent by UART*/
 		/* Need to free the buffer, and to check pending transfer*/
-		ASPEP_HWDataTransmittedIT(&aspepOverUartA);
+//		ASPEP_HWDataTransmittedIT(&aspepOverUartA);
 	}
 	if (LL_USART_IsActiveFlag_ORE(USARTA)) { /* Stopping the debugger will generate an OverRun error*/
 		LL_USART_ClearFlag_ORE(USARTA);
@@ -103,7 +107,7 @@ void USART1_IRQHandler(void) {
 		LL_USART_EnableDMAReq_RX(USARTA);
 		/* Clear pending DMA TC to process only new received packet */
 		LL_DMA_ClearFlag_TC(DMA_RX_A, DMACH_RX_A);
-		ASPEP_HWReset(&aspepOverUartA);
+//		ASPEP_HWReset(&aspepOverUartA);
 	}
 
 	/* USER CODE BEGIN USART1_IRQHandler 1 */
@@ -152,7 +156,7 @@ void SysTick_Handler(void) {
 	/* NO DMA interrupt */
 	if (LL_DMA_IsActiveFlag_TC(DMA_RX_A, DMACH_RX_A)) {
 		LL_DMA_ClearFlag_TC(DMA_RX_A, DMACH_RX_A);
-		ASPEP_HWDataReceivedIT(&aspepOverUartA);
+//		ASPEP_HWDataReceivedIT(&aspepOverUartA);
 	} else {
 		/* Nothing to do */
 	}

@@ -10,9 +10,6 @@
 #include "utils.h"
 #include "mc_api.h"
 
-#define MIN_APPLICATION_RPM 4500
-#define MIN_APPLICATION_SPEED_UNIT ((MIN_APPLICATION_RPM * SPEED_UNIT) / U_RPM)
-
 #define PWM_BUFFER_SIZE 2
 #define DSHOT_BUFFER_SIZE 32
 #define DSHOT_US_FACTOR 4
@@ -25,8 +22,6 @@ static CommunicationHandler commHandler = { 0 };
 static volatile uint16_t pwmPulseWidth;
 static volatile uint8_t pwmRxFlag = 0;
 static volatile uint8_t dshotRxFlag = 0;
-
-static volatile uint8_t motorRunningFlag = 0;
 
 void Communication_TimerInit(CommunicationType commType, TIM_HandleTypeDef *htim) {
 	commHandler.Timer = htim;
@@ -44,6 +39,10 @@ void Communication_TimerInit(CommunicationType commType, TIM_HandleTypeDef *htim
 	}
 	__HAL_TIM_SET_PRESCALER(htim, prescaler);
 	HAL_TIM_Base_Start(htim);
+}
+
+void Communication_ChangeType(CommunicationType commType) {
+	commHandler.Type = commType;
 }
 
 void PWM_WriteBuffer(uint16_t counterValue) {
@@ -68,6 +67,7 @@ void PWM_WriteBuffer(uint16_t counterValue) {
 
 void PWM_SetThrottle(void) {
 	static uint16_t lastPulseWidth = 0;
+	pwmPulseWidth = ((pwmPulseWidth + 5) / 10) * 10;
 	uint16_t currentPulseWidth = pwmPulseWidth;
 
 	if (lastPulseWidth != pwmPulseWidth) {
@@ -76,9 +76,7 @@ void PWM_SetThrottle(void) {
 		if (currentPulseWidth <= 2000 && currentPulseWidth >= 1000) {
 			int16_t targetSpeedUnit = 0;
 			if (currentPulseWidth <= 1510) {
-				if (motorRunningFlag) {
-					motorRunningFlag = 0;
-//					UART_Print("Stop\n");
+				if (IDLE != MC_GetSTMStateMotor1()) {
 					MC_StopMotor1();
 				}
 				return;
@@ -87,11 +85,9 @@ void PWM_SetThrottle(void) {
 						* (MAX_APPLICATION_SPEED_UNIT - MIN_APPLICATION_SPEED_UNIT)) / 500;
 				targetSpeedUnit += MIN_APPLICATION_SPEED_UNIT;
 			}
-			MC_ProgramSpeedRampMotor1(targetSpeedUnit, 1);
-			if (!motorRunningFlag) {
-				motorRunningFlag = 1;
+			MC_ProgramSpeedRampMotor1(targetSpeedUnit, 0);
+			if (IDLE == MC_GetSTMStateMotor1()) {
 				MC_StartMotor1();
-//				UART_Print("Start\n");
 			}
 		}
 	}
@@ -127,9 +123,9 @@ void Dshot_SetThrottle(void) {
 	}
 	DShotPacket dshotPacket = { 0 };
 	DShot_DeserializePulseWidthUs(&dshotPacket, pulseWidthUs, DSHOT_BUFFER_SIZE / 2, DSHOT150);
-	UART_Printf("%u\n", dshotPacket.throttle);
-	UART_Printf("%u\n", dshotPacket.telemetry);
-	UART_Printf("%u\n", dshotPacket.crc);
+//	UART_Printf("%u\n", dshotPacket.throttle);
+//	UART_Printf("%u\n", dshotPacket.telemetry);
+//	UART_Printf("%u\n", dshotPacket.crc);
 	if (!DShot_ValidateCrc(&dshotPacket)) {
 		return;
 	}
@@ -140,9 +136,17 @@ void Dshot_SetThrottle(void) {
 				* (MAX_APPLICATION_SPEED_UNIT - MIN_APPLICATION_SPEED_UNIT)) / 2000;
 		targetSpeedUnit += MIN_APPLICATION_SPEED_UNIT;
 	} else if (dshotPacket.throttle == 0) {
-		targetSpeedUnit = 0;
+		if (IDLE != MC_GetSTMStateMotor1()) {
+//			UART_Print("Stop\n");
+			MC_StopMotor1();
+		}
+		return;
 	}
-	MC_ProgramSpeedRampMotor1(targetSpeedUnit, 1);
+	MC_ProgramSpeedRampMotor1(targetSpeedUnit, 0);
+	if (IDLE == MC_GetSTMStateMotor1()) {
+		MC_StartMotor1();
+//		UART_Print("Start\n");
+	}
 }
 
 void Communication_SetThrottle(void) {

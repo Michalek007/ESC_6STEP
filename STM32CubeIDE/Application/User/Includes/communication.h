@@ -10,9 +10,11 @@
 
 #include "main.h"
 
+#define MIN_APPLICATION_SPEED_RPM 4000
+#define MIN_APPLICATION_SPEED_UNIT ((MIN_APPLICATION_SPEED_RPM * SPEED_UNIT) / U_RPM)
+
 typedef enum {
-	PWM = 0,
-	DSHOT = 1
+	PWM = 0, DSHOT = 1, UART = 2
 } CommunicationType;
 
 typedef struct {
@@ -21,6 +23,7 @@ typedef struct {
 } CommunicationHandler;
 
 void Communication_TimerInit(CommunicationType commType, TIM_HandleTypeDef *htim);
+void Communication_ChangeType(CommunicationType commType);
 void Communication_SetThrottle(void);
 void Communication_InputCaptureHandler(void);
 

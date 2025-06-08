@@ -34,7 +34,6 @@
 #include "mc_app_hooks.h"
 
 /* USER CODE BEGIN Includes */
-
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private define */

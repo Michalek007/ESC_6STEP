@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "communication.h"
 #include "utils.h"
+#include "interface.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -107,6 +108,8 @@ int main(void) {
 	/* Initialize interrupts */
 	MX_NVIC_Init();
 	/* USER CODE BEGIN 2 */
+
+	Interface_Init();
 	Communication_TimerInit(PWM, &htim3);
 	UART_Print("Init done!\n");
 	//MC_ProgramSpeedRampMotor1(1000, 1);
@@ -120,6 +123,7 @@ int main(void) {
 
 		/* USER CODE BEGIN 3 */
 		Communication_SetThrottle();
+		Interface_ProcessData();
 	}
 	/* USER CODE END 3 */
 }
@@ -768,6 +772,8 @@ static void MX_GPIO_Init(void) {
 	LL_GPIO_Init(OCTH_STBY1_GPIO_Port, &GPIO_InitStruct);
 
 	/* USER CODE BEGIN MX_GPIO_Init_2 */
+	// Enable RXNE interrupt to receive data without DMA
+//	LL_USART_EnableIT_RXNE(USART1);
 	/* USER CODE END MX_GPIO_Init_2 */
 }
 
