@@ -9,6 +9,7 @@
 #include "dshot.h"
 #include "utils.h"
 #include "mc_api.h"
+#include "interface.h"
 
 #define PWM_BUFFER_SIZE 2
 #define DSHOT_BUFFER_SIZE 32
@@ -49,11 +50,11 @@ void PWM_WriteBuffer(uint16_t counterValue) {
 	static uint8_t head = 0;
 	static uint8_t risingEdgeFlag = 0;
 
-	if (!risingEdgeFlag && HAL_GPIO_ReadPin(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin) == GPIO_PIN_SET) {
+	if (!risingEdgeFlag && LL_GPIO_IsInputPinSet(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin)) {
 		risingEdgeFlag = 1;
 		pwmCounterBuffer[0] = counterValue;
 		++head;
-	} else if (risingEdgeFlag && HAL_GPIO_ReadPin(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin) == GPIO_PIN_RESET) {
+	} else if (risingEdgeFlag && !LL_GPIO_IsInputPinSet(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin)) {
 		risingEdgeFlag = 0;
 		pwmCounterBuffer[1] = counterValue;
 		++head;
@@ -101,11 +102,11 @@ void Dshot_WriteBuffer(uint16_t counterValue) {
 		return;
 	}
 
-	if (!risingEdgeFlag && HAL_GPIO_ReadPin(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin) == GPIO_PIN_SET) {
+	if (!risingEdgeFlag && LL_GPIO_IsInputPinSet(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin)) {
 		risingEdgeFlag = 1;
 		dshotCounterBuffer[head] = counterValue;
 		++head;
-	} else if (risingEdgeFlag && HAL_GPIO_ReadPin(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin) == GPIO_PIN_RESET) {
+	} else if (risingEdgeFlag && !LL_GPIO_IsInputPinSet(PWM_DSHOT_GPIO_Port, PWM_DSHOT_Pin)) {
 		risingEdgeFlag = 0;
 		dshotCounterBuffer[head] = counterValue;
 		++head;
@@ -129,7 +130,9 @@ void Dshot_SetThrottle(void) {
 	if (!DShot_ValidateCrc(&dshotPacket)) {
 		return;
 	}
-
+	if (dshotPacket.telemetry) {
+		Interface_SendTelemetry();
+	}
 	int16_t targetSpeedUnit = 0;
 	if (dshotPacket.throttle >= 48) {
 		targetSpeedUnit = ((int16_t) (dshotPacket.throttle - 48)
@@ -137,7 +140,6 @@ void Dshot_SetThrottle(void) {
 		targetSpeedUnit += MIN_APPLICATION_SPEED_UNIT;
 	} else if (dshotPacket.throttle == 0) {
 		if (IDLE != MC_GetSTMStateMotor1()) {
-//			UART_Print("Stop\n");
 			MC_StopMotor1();
 		}
 		return;
@@ -145,7 +147,6 @@ void Dshot_SetThrottle(void) {
 	MC_ProgramSpeedRampMotor1(targetSpeedUnit, 0);
 	if (IDLE == MC_GetSTMStateMotor1()) {
 		MC_StartMotor1();
-//		UART_Print("Start\n");
 	}
 }
 

@@ -102,6 +102,8 @@ void DShot_DeserializePulseWidthUs(DShotPacket *dshotPacket, uint16_t *data, uin
 	case DSHOT1200:
 		break;
 	default:
+		// for dev purposes
+		logicOneThreshold = 130;
 		break;
 	}
 	uint16_t dshotData = 0;

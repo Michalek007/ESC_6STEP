@@ -14,7 +14,7 @@ inline void UART_Print(const char *string) {
 	for (size_t i = 0; i < strLen; i++) {
 		while (!LL_USART_IsActiveFlag_TXE(USART1))
 			;
-		LL_USART_TransmitData8(USART1, string[i]); // Send a byte
+		LL_USART_TransmitData8(USART1, string[i]);
 	}
 }
 

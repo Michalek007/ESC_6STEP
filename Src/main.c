@@ -111,9 +111,6 @@ int main(void) {
 
 	Interface_Init();
 	Communication_TimerInit(PWM, &htim3);
-	UART_Print("Init done!\n");
-	//MC_ProgramSpeedRampMotor1(1000, 1);
-	//MC_StartMotor1();
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
